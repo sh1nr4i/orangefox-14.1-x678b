@@ -198,7 +198,7 @@ jobs:
           set +u
           source build/envsetup.sh
           set -u
-          lunch "$PRODUCT_NAME" trunk_staging eng
+          lunch "${PRODUCT_NAME}-trunk_staging-eng"
           echo "TARGET_PRODUCT=$(get_build_var TARGET_PRODUCT)" >> "$GITHUB_ENV"
           echo "TARGET_DEVICE=$(get_build_var TARGET_DEVICE)" >> "$GITHUB_ENV"
 
@@ -211,7 +211,7 @@ jobs:
           set +u
           source build/envsetup.sh
           set -u
-          lunch "$PRODUCT_NAME" trunk_staging eng
+          lunch "${PRODUCT_NAME}-trunk_staging-eng"
           mka vendorbootimage 2>&1 | tee "$GITHUB_WORKSPACE/output/build-vendorboot.log"
 
       - name: Collect images and build metadata
