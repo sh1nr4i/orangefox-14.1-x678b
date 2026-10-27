@@ -1,4 +1,4 @@
-name: OrangeFox 13.1 - Infinix X678B (17.0 tree, vendor_boot)
+name: OrangeFox 14.1 - Infinix X678B (17.0 tree, vendor_boot)
 
 on:
   workflow_dispatch:
@@ -29,7 +29,7 @@ jobs:
       MODULES_PATH: 'device/infinix/X678B-kernel'
       COMMON_KERNEL_PATH: 'device/millennium/common-kernel'
       SEPOLICY_PATH: 'device/mediatek/sepolicy_vndr'
-      PRODUCT_NAME: 'omni_X678B'
+      PRODUCT_NAME: 'twrp_X678B'
       PRODUCT_DEVICE: 'X678B'
 
     steps:
@@ -87,17 +87,17 @@ jobs:
           echo "COMMON_KERNEL_COMMIT=$(git -C "$COMMON_KERNEL_PATH" rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "SEPOLICY_COMMIT=$(git -C "$SEPOLICY_PATH" rev-parse HEAD)" >> "$GITHUB_ENV"
 
-      - name: Create a recovery-only Omni product and register it
+      - name: Create a recovery-only TWRP product and register it
         shell: bash
         run: |
           set -euo pipefail
           cd "$FOX_ROOT"
 
-          cat > "$DEVICE_PATH/omni_X678B.mk" <<'EOF'
-          $(call inherit-product, vendor/omni/config/common.mk)
+          cat > "$DEVICE_PATH/twrp_X678B.mk" <<'EOF'
+          $(call inherit-product, vendor/twrp/config/common.mk)
           $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
 
-          PRODUCT_NAME := omni_X678B
+          PRODUCT_NAME := twrp_X678B
           PRODUCT_DEVICE := X678B
           PRODUCT_BRAND := Infinix
           PRODUCT_MODEL := Infinix X678B
@@ -129,10 +129,10 @@ jobs:
 
           path = Path(sys.argv[1])
           content = path.read_text()
-          product_line = "$(LOCAL_DIR)/omni_X678B.mk"
+          product_line = "$(LOCAL_DIR)/twrp_X678B.mk"
           if product_line not in content:
               content += "\n\nPRODUCT_MAKEFILES += \\\n              " + product_line + "\n"
-          lunch_choice = "omni_X678B-trunk_staging-eng"
+          lunch_choice = "twrp_X678B-trunk_staging-eng"
           if lunch_choice not in content:
               content += "\nCOMMON_LUNCH_CHOICES += \\\n              " + lunch_choice + "\n"
           path.write_text(content)
@@ -157,7 +157,7 @@ jobs:
           test -s "$MODULES_PATH/ramdisk/modules.load"
           test -s "$MODULES_PATH/ramdisk/modules.load.recovery"
           test -s "$MODULES_PATH/vendor_dlkm/modules.load"
-          test -f vendor/omni/config/common.mk
+          test -f vendor/twrp/config/common.mk
 
           echo "Checking BoardConfig flags..."
           grep -Eq '^BOARD_BOOT_HEADER_VERSION[[:space:]]*:=[[:space:]]*4' "$DEVICE_PATH/BoardConfig.mk"
