@@ -142,8 +142,10 @@ jobs:
       - name: Validate 17.0 tree and vendor_boot prerequisites before compiling
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           cd "$FOX_ROOT"
+
+          echo "Checking essential files..."
           test -f "$DEVICE_PATH/AndroidProducts.mk"
           test -f "$DEVICE_PATH/BoardConfig.mk"
           test -f "$DEVICE_PATH/rootdir/etc/fstab.mt6789"
@@ -157,34 +159,37 @@ jobs:
           test -s "$MODULES_PATH/vendor_dlkm/modules.load"
           test -f vendor/omni/config/common.mk
 
+          echo "Checking BoardConfig flags..."
           grep -Eq '^BOARD_BOOT_HEADER_VERSION[[:space:]]*:=[[:space:]]*4' "$DEVICE_PATH/BoardConfig.mk"
           grep -Eq '^BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE[[:space:]]*:=[[:space:]]*67108864' "$DEVICE_PATH/BoardConfig.mk"
           grep -Eq '^BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT[[:space:]]*:=[[:space:]]*true' "$DEVICE_PATH/BoardConfig.mk"
           grep -Eq '^BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT[[:space:]]*:=[[:space:]]*true' "$DEVICE_PATH/BoardConfig.mk"
 
+          echo "Checking kernel modules..."
           for list in ramdisk/modules.load ramdisk/modules.load.recovery; do
             while IFS= read -r module || [[ -n "$module" ]]; do
               module="${module%%#*}"
               module="$(echo "$module" | xargs)"
               [[ -z "$module" ]] && continue
-              test -f "$MODULES_PATH/ramdisk/$module" || {
+              if [ ! -f "$MODULES_PATH/ramdisk/$module" ]; then
                 echo "Missing module referenced by $list: $MODULES_PATH/ramdisk/$module" >&2
                 exit 1
-              }
+              fi
             done < "$MODULES_PATH/$list"
           done
+
           while IFS= read -r module || [[ -n "$module" ]]; do
             module="${module%%#*}"
             module="$(echo "$module" | xargs)"
             [[ -z "$module" ]] && continue
-            test -f "$MODULES_PATH/vendor_dlkm/$module" || {
+            if [ ! -f "$MODULES_PATH/vendor_dlkm/$module" ]; then
               echo "Missing vendor_dlkm module: $MODULES_PATH/vendor_dlkm/$module" >&2
               exit 1
-            }
+            fi
           done < "$MODULES_PATH/vendor_dlkm/modules.load"
 
-          echo 'Preflight passed. Building vendor_boot; no make clean is run on a fresh runner.'
-
+          echo 'Preflight passed.'
+        
       - name: Select the recovery product using the current lunch syntax
         shell: bash
         run: |
