@@ -77,8 +77,6 @@ jobs:
           git clone --depth=1 --single-branch --branch "$COMMON_KERNEL_BRANCH" "$COMMON_KERNEL_REPO" "$COMMON_KERNEL_PATH"
           git clone --depth=1 --single-branch --branch "$SEPOLICY_BRANCH" "$SEPOLICY_REPO" "$SEPOLICY_PATH"
 
-          # The tree's vendorsetup.sh applies ROM-only Infinity-X patches. They are not needed
-          # for a recovery product and can fail against OrangeFox source, so disable auto-loading.
           if [[ -f "$DEVICE_PATH/vendorsetup.sh" ]]; then
             mv "$DEVICE_PATH/vendorsetup.sh" "$DEVICE_PATH/vendorsetup.sh.rom-only-disabled"
           fi
@@ -95,8 +93,6 @@ jobs:
           set -euo pipefail
           cd "$FOX_ROOT"
 
-          # Do not inherit device.mk from the 17.0 ROM tree: it includes the full Infinity-X
-          # operating-system package set. This product only inherits OrangeFox's recovery config.
           cat > "$DEVICE_PATH/omni_X678B.mk" <<'EOF'
           $(call inherit-product, vendor/omni/config/common.mk)
           $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
@@ -108,8 +104,6 @@ jobs:
           PRODUCT_MANUFACTURER := Infinix
           PRODUCT_GMS_CLIENTID_BASE := android-infinix
 
-          # Keep the device-specific init/fstab modules needed by the vendor ramdisk,
-          # without inheriting the complete Infinity-X ROM product package list.
           PRODUCT_SOONG_NAMESPACES += device/infinix/X678B
           PRODUCT_PACKAGES += \
               fstab.mt6789 \
@@ -168,8 +162,6 @@ jobs:
           grep -Eq '^BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT[[:space:]]*:=[[:space:]]*true' "$DEVICE_PATH/BoardConfig.mk"
           grep -Eq '^BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT[[:space:]]*:=[[:space:]]*true' "$DEVICE_PATH/BoardConfig.mk"
 
-          # Fail quickly if the selected kernel-module branch doesn't contain the modules named
-          # by the device tree, rather than spending the rest of the runner time compiling.
           for list in ramdisk/modules.load ramdisk/modules.load.recovery; do
             while IFS= read -r module || [[ -n "$module" ]]; do
               module="${module%%#*}"
@@ -201,8 +193,6 @@ jobs:
           set +u
           source build/envsetup.sh
           set -u
-          # Current AOSP lunch syntax takes product, release, and variant as separate args.
-          # This avoids the Invalid lunch combo error caused by the legacy product-variant form.
           lunch "$PRODUCT_NAME" trunk_staging eng
           echo "TARGET_PRODUCT=$(get_build_var TARGET_PRODUCT)" >> "$GITHUB_ENV"
           echo "TARGET_DEVICE=$(get_build_var TARGET_DEVICE)" >> "$GITHUB_ENV"
