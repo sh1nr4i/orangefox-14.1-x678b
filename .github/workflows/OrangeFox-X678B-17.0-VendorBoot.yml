@@ -76,6 +76,8 @@ jobs:
           git clone --depth=1 --single-branch --branch "$MODULES_BRANCH" "$MODULES_REPO" "$MODULES_PATH"
           git clone --depth=1 --single-branch --branch "$COMMON_KERNEL_BRANCH" "$COMMON_KERNEL_REPO" "$COMMON_KERNEL_PATH"
           git clone --depth=1 --single-branch --branch "$SEPOLICY_BRANCH" "$SEPOLICY_REPO" "$SEPOLICY_PATH"
+          mkdir -p device/lineage/sepolicy/libperfmgr
+          touch device/lineage/sepolicy/libperfmgr/sepolicy.mk
 
           if [[ -f "$DEVICE_PATH/vendorsetup.sh" ]]; then
             mv "$DEVICE_PATH/vendorsetup.sh" "$DEVICE_PATH/vendorsetup.sh.rom-only-disabled"
