@@ -76,18 +76,34 @@ jobs:
           git clone --depth=1 --single-branch --branch "$MODULES_BRANCH" "$MODULES_REPO" "$MODULES_PATH"
           git clone --depth=1 --single-branch --branch "$COMMON_KERNEL_BRANCH" "$COMMON_KERNEL_REPO" "$COMMON_KERNEL_PATH"
           git clone --depth=1 --single-branch --branch "$SEPOLICY_BRANCH" "$SEPOLICY_REPO" "$SEPOLICY_PATH"
-          mkdir -p device/lineage/sepolicy/libperfmgr
-          touch device/lineage/sepolicy/libperfmgr/sepolicy.mk
-
-          if [[ -f "$DEVICE_PATH/vendorsetup.sh" ]]; then
-            mv "$DEVICE_PATH/vendorsetup.sh" "$DEVICE_PATH/vendorsetup.sh.rom-only-disabled"
-          fi
 
           echo "DEVICE_TREE_COMMIT=$(git -C "$DEVICE_PATH" rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "VENDOR_TREE_COMMIT=$(git -C "$VENDOR_PATH" rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "MODULES_TREE_COMMIT=$(git -C "$MODULES_PATH" rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "COMMON_KERNEL_COMMIT=$(git -C "$COMMON_KERNEL_PATH" rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "SEPOLICY_COMMIT=$(git -C "$SEPOLICY_PATH" rev-parse HEAD)" >> "$GITHUB_ENV"
+
+          # --- Recovery-only adjustments (ROM-specific parts are not needed) ---
+
+          # FIX 1: sepolicy_vndr includes a LineageOS file that OrangeFox does not ship.
+          mkdir -p device/lineage/sepolicy/libperfmgr
+          touch device/lineage/sepolicy/libperfmgr/sepolicy.mk
+
+          # FIX 2: the vendor tree's Android.bp imports soong namespaces
+          # (hardware/mediatek, hardware/millennium, ...) that do not exist in the
+          # OrangeFox tree. A recovery only needs BoardConfigVendor.mk from it.
+          rm -rf "$VENDOR_PATH/proprietary" "$VENDOR_PATH/radio" \
+                 "$VENDOR_PATH/Android.bp" "$VENDOR_PATH/Android.mk" \
+                 "$VENDOR_PATH/X678B-vendor.mk"
+
+          # FIX 3: ROM-only overlays/vendorsetup are not needed for a recovery.
+          rm -rf "$DEVICE_PATH/overlay" "$DEVICE_PATH/lineage-overlays"
+          if [[ -f "$DEVICE_PATH/vendorsetup.sh" ]]; then
+            mv "$DEVICE_PATH/vendorsetup.sh" "$DEVICE_PATH/vendorsetup.sh.rom-only-disabled"
+          fi
+
+          # FIX 4: this VINTF matrix lives in hardware/mediatek, which is absent here.
+          sed -i 's#hardware/mediatek/vintf/mediatek_framework_compatibility_matrix.xml##' "$DEVICE_PATH/BoardConfig.mk"
 
       - name: Create a recovery-only TWRP product and register it
         shell: bash
@@ -125,21 +141,16 @@ jobs:
               ueventd.mt6789.rc
           EOF
 
-          python3 - "$DEVICE_PATH/AndroidProducts.mk" <<'PY'
-          from pathlib import Path
-          import sys
+          # Overwrite AndroidProducts.mk so the ROM product (infinity_X678B.mk,
+          # which needs vendor/infinity) is never referenced.
+          cat > "$DEVICE_PATH/AndroidProducts.mk" <<'EOF'
+          PRODUCT_MAKEFILES := \
+              $(LOCAL_DIR)/twrp_X678B.mk
 
-          path = Path(sys.argv[1])
-          content = path.read_text()
-          product_line = "$(LOCAL_DIR)/twrp_X678B.mk"
-          if product_line not in content:
-              content += "\n\nPRODUCT_MAKEFILES += \\\n              " + product_line + "\n"
-          lunch_choice = "twrp_X678B-ap2a-eng"
-          if lunch_choice not in content:
-              content += "\nCOMMON_LUNCH_CHOICES += \\\n              " + lunch_choice + "\n"
-          path.write_text(content)
-          print(path.read_text())
-          PY
+          COMMON_LUNCH_CHOICES := \
+              twrp_X678B-ap2a-eng
+          EOF
+          cat "$DEVICE_PATH/AndroidProducts.mk"
 
       - name: Validate 17.0 tree and vendor_boot prerequisites before compiling
         shell: bash
@@ -149,9 +160,12 @@ jobs:
 
           echo "Checking essential files..."
           test -f "$DEVICE_PATH/AndroidProducts.mk"
+          test -f "$DEVICE_PATH/twrp_X678B.mk"
           test -f "$DEVICE_PATH/BoardConfig.mk"
           test -f "$DEVICE_PATH/rootdir/etc/fstab.mt6789"
           test -f "$VENDOR_PATH/BoardConfigVendor.mk"
+          test ! -e "$VENDOR_PATH/Android.bp"
+          test -f device/lineage/sepolicy/libperfmgr/sepolicy.mk
           test -f "$SEPOLICY_PATH/SEPolicy.mk"
           test -s "$COMMON_KERNEL_PATH/chihiro/Image.gz"
           test -s "$MODULES_PATH/dtbo.img"
@@ -191,13 +205,15 @@ jobs:
           done < "$MODULES_PATH/vendor_dlkm/modules.load"
 
           echo 'Preflight passed.'
-        
+
       - name: Select the recovery product using the current lunch syntax
         shell: bash
         run: |
           set -euo pipefail
           cd "$FOX_ROOT"
           set +u
+          export ALLOW_MISSING_DEPENDENCIES=true
+          export LC_ALL=C
           source build/envsetup.sh
           lunch "${PRODUCT_NAME}-ap2a-eng"
           echo "TARGET_PRODUCT=$(get_build_var TARGET_PRODUCT)" >> "$GITHUB_ENV"
@@ -210,9 +226,11 @@ jobs:
           cd "$FOX_ROOT"
           mkdir -p "$GITHUB_WORKSPACE/output"
           set +u
+          export ALLOW_MISSING_DEPENDENCIES=true
+          export LC_ALL=C
           source build/envsetup.sh
           lunch "${PRODUCT_NAME}-ap2a-eng"
-          mka vendorbootimage 2>&1 | tee "$GITHUB_WORKSPACE/output/build-vendorboot.log"
+          mka adbd vendorbootimage 2>&1 | tee "$GITHUB_WORKSPACE/output/build-vendorboot.log"
 
       - name: Collect images and build metadata
         if: always()
