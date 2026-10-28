@@ -123,6 +123,8 @@ jobs:
           set -euo pipefail
           cd "$FOX_ROOT"
 
+          touch "$DEVICE_PATH/fox_dir.keep"
+
           cat > "$DEVICE_PATH/twrp_X678B.mk" <<'EOF'
           $(call inherit-product, vendor/twrp/config/common.mk)
           $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
@@ -144,6 +146,12 @@ jobs:
               vbmeta_system \
               vbmeta_vendor \
               vendor_boot
+
+          # OrangeFox's A14 script writes into these ramdisk directories, but a ROM-based
+          # tree never creates them. Placeholder files make the build create the dirs.
+          PRODUCT_COPY_FILES += \
+              device/infinix/X678B/fox_dir.keep:recovery/root/sbin/.keep \
+              device/infinix/X678B/fox_dir.keep:recovery/root/linkerconfig/.keep
 
           PRODUCT_SOONG_NAMESPACES += device/infinix/X678B
           PRODUCT_PACKAGES += \
