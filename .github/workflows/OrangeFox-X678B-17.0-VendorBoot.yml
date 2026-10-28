@@ -105,6 +105,11 @@ jobs:
           # FIX 4: this VINTF matrix lives in hardware/mediatek, which is absent here.
           sed -i 's#hardware/mediatek/vintf/mediatek_framework_compatibility_matrix.xml##' "$DEVICE_PATH/BoardConfig.mk"
 
+          # FIX 6: a recovery does not need the ROM/MediaTek vendor SELinux policy.
+          # Those .te files use LineageOS macros (e.g. rw_dir_file) that do not exist
+          # here and break recovery_sepolicy.cil. Drop them from the recovery build.
+          sed -i -E '/sepolicy_vndr\/SEPolicy\.mk/d; /SEPOLICY_DIRS/d' "$DEVICE_PATH/BoardConfig.mk"
+
           # FIX 5: TWRP/OrangeFox needs a recovery theme; ROM trees do not set one.
           cat >> "$DEVICE_PATH/BoardConfig.mk" <<'EOF'
 
