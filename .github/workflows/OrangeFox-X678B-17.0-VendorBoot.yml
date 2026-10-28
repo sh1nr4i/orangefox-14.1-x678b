@@ -132,7 +132,7 @@ jobs:
           product_line = "$(LOCAL_DIR)/twrp_X678B.mk"
           if product_line not in content:
               content += "\n\nPRODUCT_MAKEFILES += \\\n              " + product_line + "\n"
-          lunch_choice = "twrp_X678B-trunk_staging-eng"
+          lunch_choice = "twrp_X678B-ap2a-eng"
           if lunch_choice not in content:
               content += "\nCOMMON_LUNCH_CHOICES += \\\n              " + lunch_choice + "\n"
           path.write_text(content)
