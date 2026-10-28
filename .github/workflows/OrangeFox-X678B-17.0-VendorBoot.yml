@@ -129,6 +129,17 @@ jobs:
           PRODUCT_MANUFACTURER := Infinix
           PRODUCT_GMS_CLIENTID_BASE := android-infinix
 
+          # A/B device: these live in device.mk (ROM-only), so declare them here.
+          # BoardConfigVendor.mk appends the MediaTek partitions to this list.
+          AB_OTA_UPDATER := true
+          AB_OTA_PARTITIONS := \
+              boot \
+              dtbo \
+              vbmeta \
+              vbmeta_system \
+              vbmeta_vendor \
+              vendor_boot
+
           PRODUCT_SOONG_NAMESPACES += device/infinix/X678B
           PRODUCT_PACKAGES += \
               fstab.mt6789 \
