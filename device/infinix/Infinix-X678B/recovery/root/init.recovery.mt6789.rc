@@ -47,10 +47,9 @@ on boot
     mkdir /data/vendor 0775 system system
     mkdir /data/vendor/mcRegistry 0775 system system
 
-    # Start Trustonic TEE & Security HAL services for storage decryption
+    # Start Trustonic TEE & Security HAL services
     start mobicore
     start vendor.gatekeeper-1-0
-    start vendor.keymint-trustonic
 
 on post-fs-data
     start health-hal-2-1
@@ -69,23 +68,9 @@ service vendor.gatekeeper-1-0 /vendor/bin/hw/android.hardware.gatekeeper@1.0-ser
     disabled
     seclabel u:r:recovery:s0
 
-service vendor.keymint-trustonic /vendor/bin/hw/android.hardware.security.keymint-service.trustonic
-    interface android.hardware.keymaster@4.0::IKeymasterDevice default
-    interface android.hardware.keymaster@4.1::IKeymasterDevice default
-    user root
-    group root system
-    disabled
-    seclabel u:r:recovery:s0
-
 on property:hwservicemanager.ready=true
     start mobicore
     start vendor.gatekeeper-1-0
-    start vendor.keymint-trustonic
-
-on property:ro.crypto.state=encrypted && property:ro.boot.dynamic_partitions=true
-    start mobicore
-    start vendor.gatekeeper-1-0
-    start vendor.keymint-trustonic
 
 on property:servicemanager.ready=true
     setprop sys.boot_completed 1

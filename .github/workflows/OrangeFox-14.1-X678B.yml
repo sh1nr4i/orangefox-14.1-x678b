@@ -105,6 +105,9 @@ jobs:
           sed -i 's/ --board ""//g' "$COMMON_PATH/BoardConfigCommon.mk"
           sed -i '/RECOVERY_BINARY_SOURCE_FILES/d; /debuggerd/d; /strace/d' "$COMMON_PATH/BoardConfigCommon.mk"
           sed -i '/TW_INCLUDE_LPTOOLS/d; /TW_INCLUDE_FB2PNG/d' "$COMMON_PATH/BoardConfigCommon.mk"
+          sed -i 's/TW_INCLUDE_CRYPTO := true/TW_INCLUDE_CRYPTO := false/g' "$COMMON_PATH/BoardConfigCommon.mk"
+          sed -i 's/TW_INCLUDE_CRYPTO_FBE := true/TW_INCLUDE_CRYPTO_FBE := false/g' "$COMMON_PATH/BoardConfigCommon.mk"
+          sed -i 's/TW_FORCE_KEYMASTER_VER := true/TW_FORCE_KEYMASTER_VER := false/g' "$COMMON_PATH/BoardConfigCommon.mk"
           cat >> "$COMMON_PATH/BoardConfigCommon.mk" <<'EOF'
 
           # OrangeFox 14.1 Keymaster & Lptools compatibility

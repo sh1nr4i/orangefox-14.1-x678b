@@ -52,7 +52,10 @@ TW_EXCLUDE_LPTOOLS := true
 TW_USE_TOOLBOX := true
 TW_INPUT_BLACKLIST := "hbtp_vm"
 
-# OrangeFox 14.1 Specific Flags (Required when TW_FORCE_KEYMASTER_VER := true)
+# Crypto: Disabled to prevent recovery hang at splash screen (Trustonic KeyMint binary lacks Android 14 AIDL libraries)
+TW_INCLUDE_CRYPTO := false
+TW_INCLUDE_CRYPTO_FBE := false
+TW_FORCE_KEYMASTER_VER := false
 OF_DEFAULT_KEYMASTER_VERSION := 4.1
 FOX_AB_DEVICE := 1
 FOX_VIRTUAL_AB_DEVICE := 1
