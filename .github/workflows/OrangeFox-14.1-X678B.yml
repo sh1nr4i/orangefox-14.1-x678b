@@ -280,7 +280,6 @@ jobs:
           export ALLOW_MISSING_DEPENDENCIES=true
           export FOX_BUILD_DEVICE="X678B"
           export FOX_TARGET_DEVICES="Infinix-X678B,X678B,satire"
-          export OF_TARGET_DEVICES="Infinix-X678B,X678B,satire"
           export OF_NO_TREBLE_COMPATIBILITY_CHECK=1
           export OF_IGNORE_LOGICAL_MOUNT_ERRORS=1
           export OF_DISABLE_MIUI_OTA_BY_DEFAULT=1

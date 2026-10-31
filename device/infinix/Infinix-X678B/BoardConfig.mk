@@ -69,7 +69,6 @@ OF_ALLOW_DISABLE_NAVBAR := 0
 
 # OrangeFox Universal ROM Compatibility Flags (Stock, Millennium, Infinity-X, LineageOS, AOSP)
 # Ensures OrangeFox is NOT restricted to Millennium trees and can flash any Android ROM
-OF_TARGET_DEVICES := Infinix-X678B,X678B,satire
 FOX_TARGET_DEVICES := Infinix-X678B,X678B,satire
 OF_NO_TREBLE_COMPATIBILITY_CHECK := 1
 OF_IGNORE_LOGICAL_MOUNT_ERRORS := 1
