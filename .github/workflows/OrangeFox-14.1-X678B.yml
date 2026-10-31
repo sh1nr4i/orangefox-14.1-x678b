@@ -86,8 +86,9 @@ jobs:
           rm -rf "$COMMON_PATH"
           git clone --depth=1 -b "$COMMON_BRANCH" "$COMMON_REPO" "$COMMON_PATH"
 
-          # Make virtual_ab_ota compression.mk optional for Android 14+ compatibility
-          sed -i 's/inherit-product, \$(SRC_TARGET_DIR)\/product\/virtual_ab_ota\/compression.mk/inherit-product-if-exists, \$(SRC_TARGET_DIR)\/product\/virtual_ab_ota\/compression.mk/g' "$COMMON_PATH/common.mk"
+          # Make all product inherits in common.mk optional for Android 14+ compatibility
+          # (gsi_keys.mk and virtual_ab_ota/compression.mk were removed/renamed in Android 14)
+          sed -i 's/inherit-product,/inherit-product-if-exists,/g' "$COMMON_PATH/common.mk"
 
           # 2. Place our unified Infinix-X678B Device Tree
           rm -rf "$DEVICE_PATH"

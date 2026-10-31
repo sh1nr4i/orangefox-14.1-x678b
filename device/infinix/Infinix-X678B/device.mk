@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-LOCAL_PATH := device/infinix/Infinix-X678B
+DEVICE_PATH := device/infinix/Infinix-X678B
 
 # Inherit from mt6789-common
 $(call inherit-product, device/transsion/mt6789-common/common.mk)
@@ -16,8 +16,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Recovery Ramdisk files & directories required by OrangeFox 14.1 (A14+)
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/recovery/root/sbin/.keep:$(TARGET_COPY_OUT_RECOVERY)/root/sbin/.keep \
-    $(LOCAL_PATH)/recovery/root/linkerconfig/.keep:$(TARGET_COPY_OUT_RECOVERY)/root/linkerconfig/.keep \
-    $(LOCAL_PATH)/recovery/root/system/etc/task_profiles.json:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/task_profiles.json \
-    $(LOCAL_PATH)/recovery/root/mtk-plpath-utils.rc:$(TARGET_COPY_OUT_RECOVERY)/root/mtk-plpath-utils.rc \
-    $(LOCAL_PATH)/recovery/root/snapuserd.rc:$(TARGET_COPY_OUT_RECOVERY)/root/snapuserd.rc
+    $(DEVICE_PATH)/recovery/root/sbin/.keep:recovery/root/sbin/.keep \
+    $(DEVICE_PATH)/recovery/root/linkerconfig/.keep:recovery/root/linkerconfig/.keep \
+    $(DEVICE_PATH)/recovery/root/system/etc/task_profiles.json:recovery/root/system/etc/task_profiles.json \
+    $(DEVICE_PATH)/recovery/root/mtk-plpath-utils.rc:recovery/root/mtk-plpath-utils.rc \
+    $(DEVICE_PATH)/recovery/root/snapuserd.rc:recovery/root/snapuserd.rc
