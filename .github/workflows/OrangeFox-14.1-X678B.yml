@@ -208,6 +208,8 @@ jobs:
           mkdir -p "$DEVICE_PATH/prebuilt" "$DEVICE_PATH/recovery/root/lib/modules"
           cp -f "$RUNNER_TEMP/akif_kernel/dtb/mt6789.dtb" "$DEVICE_PATH/prebuilt/dtb.img"
           cp -f "$RUNNER_TEMP/akif_kernel/ramdisk/"*.ko "$DEVICE_PATH/recovery/root/lib/modules/"
+          cp -f "$RUNNER_TEMP/akif_kernel/vendor_dlkm/gt9896s.ko" "$DEVICE_PATH/recovery/root/lib/modules/" 2>/dev/null || true
+          cp -f "$RUNNER_TEMP/akif_kernel/vendor_dlkm/gt9886.ko" "$DEVICE_PATH/recovery/root/lib/modules/" 2>/dev/null || true
           cp -f "$RUNNER_TEMP/akif_kernel/ramdisk/modules.dep" "$DEVICE_PATH/recovery/root/lib/modules/modules.dep"
           cp -f "$RUNNER_TEMP/akif_kernel/ramdisk/modules.alias" "$DEVICE_PATH/recovery/root/lib/modules/modules.alias"
 
@@ -217,6 +219,11 @@ jobs:
           cp -f "$DEVICE_PATH/recovery/root/system/etc/twrp.flags" "$COMMON_PATH/recovery/root/system/etc/twrp.flags"
           cp -f "$DEVICE_PATH/recovery/root/init.recovery.mt6789.rc" "$COMMON_PATH/recovery/root/init.recovery.mt6789.rc"
           cp -f "$DEVICE_PATH/recovery/root/system/etc/task_profiles.json" "$COMMON_PATH/recovery/root/system/etc/task_profiles.json"
+
+          # 5. Prevent HIDL bootcontrol deadlock by setting passthrough transport in VINTF manifest
+          if [ -f "$COMMON_PATH/recovery/root/vendor/etc/vintf/manifest/android.hardware.boot@1.2.xml" ]; then
+            sed -i 's/<transport>hwbinder<\/transport>/<transport>passthrough<\/transport>/g' "$COMMON_PATH/recovery/root/vendor/etc/vintf/manifest/android.hardware.boot@1.2.xml"
+          fi
 
           # Ensure sbin and linkerconfig directories exist for OrangeFox 14.1 post-build script
           mkdir -p "$DEVICE_PATH/recovery/root/sbin" "$DEVICE_PATH/recovery/root/linkerconfig"
@@ -239,9 +246,15 @@ jobs:
           test -s "$DEVICE_PATH/recovery/root/lib/modules/modules.load"
           test -s "$DEVICE_PATH/recovery/root/lib/modules/modules.load.recovery"
           ! grep -Eq 'clk-disable-unused\.ko|mtk-pm-domain-disable-unused\.ko' "$DEVICE_PATH/recovery/root/lib/modules/modules.load"
-          grep -q 'clk-disable-unused.ko' "$DEVICE_PATH/recovery/root/lib/modules/modules.load.recovery"
+          ! grep -Eq 'clk-disable-unused\.ko|mtk-pm-domain-disable-unused\.ko' "$DEVICE_PATH/recovery/root/lib/modules/modules.load.recovery"
           grep -q 'TARGET_COPY_OUT_VENDOR_RAMDISK' "$DEVICE_PATH/device.mk"
+          ! grep -Eq 'start boot-hal-1-2|exec u:r:update_engine' "$DEVICE_PATH/recovery/root/init.recovery.mt6789.rc"
+          ! grep -q '/dev/block/bootdevice/by-name/system' "$DEVICE_PATH/recovery/root/system/etc/twrp.flags"
           test -s "$DEVICE_PATH/recovery/root/lib/modules/ft3681_common.ko"
+          test -s "$DEVICE_PATH/recovery/root/lib/modules/gt9896s.ko"
+          test -s "$DEVICE_PATH/recovery/root/lib/modules/gt9886.ko"
+          grep -q 'gt9896s.ko' "$DEVICE_PATH/recovery/root/lib/modules/modules.load.recovery"
+          grep -q 'gt9886.ko' "$DEVICE_PATH/recovery/root/lib/modules/modules.load.recovery"
           test -s "$DEVICE_PATH/recovery/root/lib/modules/hl7138.ko"
           test -s "$DEVICE_PATH/recovery/root/lib/modules/mtk_chg_det.ko"
           test -s "$DEVICE_PATH/recovery/root/vendor/firmware/focaltech_ts_fw.bin"
@@ -301,6 +314,7 @@ jobs:
           test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/first_stage_ramdisk/fstab.mt6789"
           test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/lib/modules/modules.load.recovery"
           test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/lib/modules/ft3681_common.ko"
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/lib/modules/gt9896s.ko"
 
       - name: Collect Output Images
         if: always()

@@ -11,7 +11,6 @@ on init
     setprop crypto.ready 1
     setprop ro.vendor.mtk_fast_charging_support 1
     start unified_slot_detect
-    start boot-hal-1-2
 
 on fs
     wait /dev/block/platform/soc/11270000.ufshci
@@ -22,7 +21,6 @@ on fs
 on boot
     setprop sys.usb.config adb
     start mtk.plpath.utils.link
-    exec u:r:update_engine:s0 root root -- /system/bin/mtk_plpath_utils
 
     # Fuel gauge & Transsion 68W All-Round FastCharge nodes
     symlink /sys/devices/platform/soc/10026000.pwrap/10026000.pwrap:mt6366/mt6358-gauge /dev/gauge

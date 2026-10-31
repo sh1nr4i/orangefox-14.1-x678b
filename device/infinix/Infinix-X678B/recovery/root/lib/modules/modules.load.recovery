@@ -185,13 +185,13 @@ cfg80211.ko
 mac80211.ko
 mtk-mbox-mailbox.ko
 mtk-socinfo.ko
-clk-disable-unused.ko
-mtk-pm-domain-disable-unused.ko
 sec.ko
 load_track.ko
 uload_ind.ko
 fair.ko
 ft3681_common.ko
+gt9886.ko
+gt9896s.ko
 aw862xx_haptic.ko
 tkv.ko
 tkv_recovery.ko
