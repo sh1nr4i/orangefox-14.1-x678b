@@ -86,6 +86,9 @@ jobs:
           rm -rf "$COMMON_PATH"
           git clone --depth=1 -b "$COMMON_BRANCH" "$COMMON_REPO" "$COMMON_PATH"
 
+          # Make virtual_ab_ota compression.mk optional for Android 14+ compatibility
+          sed -i 's/inherit-product, \$(SRC_TARGET_DIR)\/product\/virtual_ab_ota\/compression.mk/inherit-product-if-exists, \$(SRC_TARGET_DIR)\/product\/virtual_ab_ota\/compression.mk/g' "$COMMON_PATH/common.mk"
+
           # 2. Place our unified Infinix-X678B Device Tree
           rm -rf "$DEVICE_PATH"
           mkdir -p "$(dirname "$DEVICE_PATH")"
@@ -96,11 +99,34 @@ jobs:
             rm -rf "$DEVICE_PATH/.git" "$DEVICE_PATH/.github"
           fi
 
-          # 3. Sync latest kernel ramdisk modules & DTB from akifakif32 (17.0 / sixteen-mck)
+          # Remove legacy omni_Infinix-X678B.mk (hyphen in product name breaks Android 14 envsetup.mk parser)
+          rm -f "$DEVICE_PATH/omni_Infinix-X678B.mk"
+          if [ "$FOX_BRANCH" = "14.1" ]; then
+            cat > "$DEVICE_PATH/AndroidProducts.mk" <<'EOF'
+          PRODUCT_MAKEFILES := \
+              $(LOCAL_DIR)/twrp_X678B.mk
+
+          COMMON_LUNCH_CHOICES := \
+              twrp_X678B-ap2a-eng
+          EOF
+          else
+            cat > "$DEVICE_PATH/AndroidProducts.mk" <<'EOF'
+          PRODUCT_MAKEFILES := \
+              $(LOCAL_DIR)/twrp_X678B.mk
+
+          COMMON_LUNCH_CHOICES := \
+              twrp_X678B-eng
+          EOF
+          fi
+
+          # 3. Sync latest kernel ramdisk .ko modules & DTB from akifakif32 (17.0 / sixteen-mck)
+          #    Preserve our topologically-sorted modules.load, modules.load.recovery, and modules.softdep for 68W FastCharge
           git clone --depth=1 -b "$MODULES_BRANCH" "$MODULES_REPO" "$RUNNER_TEMP/akif_kernel"
           mkdir -p "$DEVICE_PATH/prebuilt" "$DEVICE_PATH/recovery/root/lib/modules"
           cp -f "$RUNNER_TEMP/akif_kernel/dtb/mt6789.dtb" "$DEVICE_PATH/prebuilt/dtb.img"
-          cp -f "$RUNNER_TEMP/akif_kernel/ramdisk/"* "$DEVICE_PATH/recovery/root/lib/modules/"
+          cp -f "$RUNNER_TEMP/akif_kernel/ramdisk/"*.ko "$DEVICE_PATH/recovery/root/lib/modules/"
+          cp -f "$RUNNER_TEMP/akif_kernel/ramdisk/modules.dep" "$DEVICE_PATH/recovery/root/lib/modules/modules.dep"
+          cp -f "$RUNNER_TEMP/akif_kernel/ramdisk/modules.alias" "$DEVICE_PATH/recovery/root/lib/modules/modules.alias"
 
           # 4. Override common fstab & init.recovery.mt6789.rc with our universal Android 12-17 versions
           cp -f "$DEVICE_PATH/recovery/root/first_stage_ramdisk/fstab.mt6789" "$COMMON_PATH/recovery/root/first_stage_ramdisk/fstab.mt6789"
@@ -108,6 +134,10 @@ jobs:
           cp -f "$DEVICE_PATH/recovery/root/system/etc/twrp.flags" "$COMMON_PATH/recovery/root/system/etc/twrp.flags"
           cp -f "$DEVICE_PATH/recovery/root/init.recovery.mt6789.rc" "$COMMON_PATH/recovery/root/init.recovery.mt6789.rc"
           cp -f "$DEVICE_PATH/recovery/root/system/etc/task_profiles.json" "$COMMON_PATH/recovery/root/system/etc/task_profiles.json"
+
+          # Ensure sbin and linkerconfig directories exist for OrangeFox 14.1 post-build script
+          mkdir -p "$DEVICE_PATH/recovery/root/sbin" "$DEVICE_PATH/recovery/root/linkerconfig"
+          touch "$DEVICE_PATH/recovery/root/sbin/.keep" "$DEVICE_PATH/recovery/root/linkerconfig/.keep"
 
           # Disable external clone in vendorsetup.sh since we already cloned common tree above
           rm -f "$DEVICE_PATH/vendorsetup.sh"
@@ -129,6 +159,7 @@ jobs:
           test -s "$COMMON_PATH/BoardConfigCommon.mk"
           test -s "$COMMON_PATH/recovery/root/first_stage_ramdisk/fstab.mt6789"
           test -s "$COMMON_PATH/recovery/root/system/etc/task_profiles.json"
+          cat "$DEVICE_PATH/AndroidProducts.mk"
 
       - name: Build OrangeFox vendor_boot image
         shell: bash
@@ -143,7 +174,7 @@ jobs:
           source build/envsetup.sh
 
           if [ "$FOX_BRANCH" = "14.1" ]; then
-            lunch "${PRODUCT_NAME}-ap2a-eng" || lunch "${PRODUCT_NAME}-eng"
+            lunch "${PRODUCT_NAME}-ap2a-eng"
           else
             lunch "${PRODUCT_NAME}-eng"
           fi

@@ -9,6 +9,7 @@ on init
     setprop sys.usb.ffs.aio_compat 0
     export LD_LIBRARY_PATH /system/lib64:/vendor/lib64:/vendor/lib64/hw
     setprop crypto.ready 1
+    setprop ro.vendor.mtk_fast_charging_support 1
     start boot-hal-1-2
 
 on fs
@@ -16,15 +17,27 @@ on fs
     symlink /dev/block/platform/soc/11270000.ufshci /dev/block/bootdevice
     install_keyring
 
-on fs && property:ro.debuggable=0
-    # distinguish USB should connect or not, i.e. CDP vs SDP
-    write /sys/class/udc/musb-hdrc/device/cmode 2
-    start adbd
-
 on boot
     setprop sys.usb.config adb
     start mtk.plpath.utils.link
     exec u:r:update_engine:s0 root root -- /system/bin/mtk_plpath_utils
+
+    # Fuel gauge & Transsion 68W All-Round FastCharge nodes
+    symlink /sys/devices/platform/soc/10026000.pwrap/10026000.pwrap:mt6366/mt6358-gauge /dev/gauge
+    chmod 0666 /dev/MT_pmic_adc_cali
+    chmod 0666 /sys/devices/platform/odm/odm:tran_battery/tran_bat_temp
+    chmod 0666 /sys/devices/platform/odm/odm:tran_battery/CHG_CAPACITY_TEST
+    chmod 0666 /sys/devices/platform/odm/odm:tran_battery/tran_set_current
+    chmod 0666 /sys/devices/platform/odm/odm:tran_battery/OTG_CTL
+    chmod 0666 /sys/devices/platform/charger/Charger_Type
+    chown system system /sys/devices/platform/charger/tran_aichg_bigdata
+    chmod 0666 /sys/devices/platform/charger/tran_aichg_bigdata
+    chown system system /sys/devices/platform/charger/tran_aichg_disable_charger
+    chmod 0666 /sys/devices/platform/charger/tran_aichg_disable_charger
+    chown system system /sys/devices/platform/charger/bypass_charger
+    chmod 0666 /sys/devices/platform/charger/bypass_charger
+    chown system system /sys/devices/platform/odm/odm:smart_charging/smart_charging
+    chmod 0664 /sys/devices/platform/odm/odm:smart_charging/smart_charging
 
 on post-fs-data
     start health-hal-2-1

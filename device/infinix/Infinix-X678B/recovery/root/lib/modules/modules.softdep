@@ -1,2 +1,11 @@
-# Soft dependencies extracted from modules themselves.
-softdep mt6789_dcm pre:mtk_dcm.ko
+# Soft dependencies extracted from modules themselves and fast-charging IC probe order.
+softdep mt6789_dcm pre: mtk_dcm
+softdep tran_chg pre: rt9471 hl7138 rfc_ta mtk_chg_det
+softdep mtk_charger_framework pre: rt9471 hl7138 rfc_ta mtk_chg_det tran_chg
+softdep mtk_pd_adapter pre: tcpc_rt1711h
+softdep pca_rfc_ta pre: tcpc_rt1711h mtk_pd_adapter usb_switch
+softdep mtk_pep50 pre: rt9471 hl7138 pca_rfc_ta mtk_pd_adapter mt6358_battery
+softdep mtk_pep40 pre: rt9471 hl7138 pca_rfc_ta mtk_pd_adapter mt6358_battery
+softdep mtk_pep20 pre: rt9471 hl7138 mtk_pd_adapter mt6358_battery
+softdep mtk_pd_charging pre: rt9471 hl7138 mtk_pd_adapter mt6358_battery
+softdep tcpci_late_sync pre: tcpc_rt1711h mtk_pd_adapter pca_rfc_ta rt_pd_manager extcon-mtk-usb mtk_pep50 mt6358_battery
