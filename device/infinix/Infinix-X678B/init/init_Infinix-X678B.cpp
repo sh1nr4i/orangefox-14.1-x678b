@@ -213,8 +213,6 @@ void vendor_load_properties()
         property_override(string("ro.product.system.") + prop + string("device"), "Infinix NOTE 30 Pro");
     }
 
-    property_override("ro.build.product", "Infinix-X678B");
-
     const string slot_suffix = detect_slot_suffix();
     if (!slot_suffix.empty()) {
         // Export the already-selected slot to recovery tools such as AnyKernel3.
@@ -229,11 +227,11 @@ void vendor_load_properties()
 #ifdef BUILD_SLOT_DETECT_BINARY
 #include <sys/wait.h>
 
-static void run_resetprop(const char *bin, const char *key, const string &val)
+static void run_resetprop(const char *key, const string &val)
 {
     pid_t pid = fork();
     if (pid == 0) {
-        execl(bin, bin, key, val.c_str(), nullptr);
+        execl("/system/bin/resetprop", "resetprop", key, val.c_str(), nullptr);
         _exit(127);
     } else if (pid > 0) {
         int status = 0;
@@ -243,28 +241,10 @@ static void run_resetprop(const char *bin, const char *key, const string &val)
 
 int main()
 {
-    // If slot suffix property was already populated (e.g. by vendor_load_properties
-    // in init), do not fork-exec any external tool.
-    const string existing = GetProperty("ro.boot.slot_suffix", "");
-    if (!existing.empty()) {
-        return 0;
-    }
-
     const string slot_suffix = detect_slot_suffix();
     if (!slot_suffix.empty()) {
-        const char *bin = nullptr;
-        if (access("/system/bin/resetprop", X_OK) == 0) {
-            bin = "/system/bin/resetprop";
-        } else if (access("/sbin/resetprop", X_OK) == 0) {
-            bin = "/sbin/resetprop";
-        } else if (access("/system/bin/setprop", X_OK) == 0) {
-            bin = "/system/bin/setprop";
-        }
-
-        if (bin) {
-            run_resetprop(bin, "ro.boot.slot_suffix", slot_suffix);
-            run_resetprop(bin, "ro.boot.slot", slot_suffix.substr(1));
-        }
+        run_resetprop("ro.boot.slot_suffix", slot_suffix);
+        run_resetprop("ro.boot.slot", slot_suffix.substr(1));
     }
     return 0;
 }
