@@ -66,3 +66,13 @@ OF_STATUS_INDENT_LEFT := 48
 OF_STATUS_INDENT_RIGHT := 48
 OF_HIDE_NOTCH := 1
 OF_ALLOW_DISABLE_NAVBAR := 0
+
+# OrangeFox Universal ROM Compatibility Flags (Stock, Millennium, Infinity-X, LineageOS, AOSP)
+# Ensures OrangeFox is NOT restricted to Millennium trees and can flash any Android ROM
+OF_TARGET_DEVICES := Infinix-X678B,X678B,satire
+FOX_TARGET_DEVICES := Infinix-X678B,X678B,satire
+OF_NO_TREBLE_COMPATIBILITY_CHECK := 1
+OF_IGNORE_LOGICAL_MOUNT_ERRORS := 1
+OF_SUPPORT_ALL_BLOCK_OTA_UPDATES := 1
+OF_DISABLE_MIUI_OTA_BY_DEFAULT := 1
+OF_QUICK_BACKUP_LIST := "/boot;/data;/super;"

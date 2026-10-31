@@ -213,6 +213,8 @@ void vendor_load_properties()
         property_override(string("ro.product.system.") + prop + string("device"), "Infinix NOTE 30 Pro");
     }
 
+    property_override("ro.build.product", "Infinix-X678B");
+
     const string slot_suffix = detect_slot_suffix();
     if (!slot_suffix.empty()) {
         // Export the already-selected slot to recovery tools such as AnyKernel3.
