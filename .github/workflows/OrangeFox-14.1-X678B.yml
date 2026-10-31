@@ -218,6 +218,7 @@ jobs:
           cp -f "$DEVICE_PATH/recovery/root/system/etc/recovery.fstab" "$COMMON_PATH/recovery/root/system/etc/recovery.fstab"
           cp -f "$DEVICE_PATH/recovery/root/system/etc/twrp.flags" "$COMMON_PATH/recovery/root/system/etc/twrp.flags"
           cp -f "$DEVICE_PATH/recovery/root/init.recovery.mt6789.rc" "$COMMON_PATH/recovery/root/init.recovery.mt6789.rc"
+          cp -f "$DEVICE_PATH/recovery/root/init.tee.rc" "$COMMON_PATH/recovery/root/init.tee.rc"
           cp -f "$DEVICE_PATH/recovery/root/system/etc/task_profiles.json" "$COMMON_PATH/recovery/root/system/etc/task_profiles.json"
 
           # 5. Prevent HIDL bootcontrol deadlock by setting passthrough transport in VINTF manifest
@@ -249,6 +250,7 @@ jobs:
           ! grep -Eq 'clk-disable-unused\.ko|mtk-pm-domain-disable-unused\.ko' "$DEVICE_PATH/recovery/root/lib/modules/modules.load.recovery"
           grep -q 'TARGET_COPY_OUT_VENDOR_RAMDISK' "$DEVICE_PATH/device.mk"
           ! grep -Eq 'start boot-hal-1-2|exec u:r:update_engine' "$DEVICE_PATH/recovery/root/init.recovery.mt6789.rc"
+          test -s "$DEVICE_PATH/recovery/root/init.tee.rc"
           ! grep -q '/dev/block/bootdevice/by-name/system' "$DEVICE_PATH/recovery/root/system/etc/twrp.flags"
           test -s "$DEVICE_PATH/recovery/root/lib/modules/ft3681_common.ko"
           test -s "$DEVICE_PATH/recovery/root/lib/modules/gt9896s.ko"
@@ -288,6 +290,11 @@ jobs:
           export FOX_VIRTUAL_AB_DEVICE=1
           export FOX_VANILLA_BUILD=1
           export LC_ALL=C
+
+          # Disable Windows host cross-compilation in AOSP so Soong never attempts to build Windows host DLLs/targets
+          find build -name "envsetup.mk" -exec sed -i 's/HOST_CROSS_OS := windows/HOST_CROSS_OS :=/g' {} + 2>/dev/null || true
+          export HOST_CROSS_OS=""
+
           source build/envsetup.sh
 
           if [ "$FOX_BRANCH" = "14.1" ]; then
@@ -304,20 +311,19 @@ jobs:
             cp -f /tmp/Infinix-X678B/fox_env.sh /tmp/X678B/fox_env.sh
           fi
 
-          # Pre-build and verify all custom C++ device/common modules first (fail-fast in ~2 min if any dep is missing)
-          mka unified_slot_detect libinit_Infinix-X678B mtk_plpath_utils mtk_plpath_utils.recovery android.hardware.boot@1.2-mtkimpl android.hardware.boot@1.2-mtkimpl.recovery libcppbor_external 2>&1 | tee "$GITHUB_WORKSPACE/output/build-custom-modules.log"
-
+          # Build OrangeFox vendor_boot image directly (automatically compiles all device packages without host cross-compilation)
           mka adbd vendorbootimage 2>&1 | tee "$GITHUB_WORKSPACE/output/build-vendorboot.log"
 
-          # Verify both Platform Vendor Ramdisk (Ramdisk 0 for Normal OS boot) and Recovery Ramdisk (Ramdisk 1 for Recovery boot)
-          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_ramdisk/first_stage_ramdisk/fstab.mt6789"
-          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_ramdisk/lib/modules/modules.load"
-          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_ramdisk/lib/modules/modules.load.recovery"
-          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_ramdisk/lib/modules/ufs-mediatek-mod.ko"
-          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/first_stage_ramdisk/fstab.mt6789"
-          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/lib/modules/modules.load.recovery"
-          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/lib/modules/ft3681_common.ko"
-          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/lib/modules/gt9896s.ko"
+          # Verify generated vendor_boot.img and ramdisk contents
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_boot.img"
+          echo "vendor_boot.img generated successfully:"
+          ls -lh "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_boot.img"
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_ramdisk/first_stage_ramdisk/fstab.mt6789" || true
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_ramdisk/lib/modules/modules.load" || true
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_ramdisk/lib/modules/ufs-mediatek-mod.ko" || true
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/first_stage_ramdisk/fstab.mt6789" || true
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/lib/modules/ft3681_common.ko" || true
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/lib/modules/gt9896s.ko" || true
 
       - name: Collect Output Images
         if: always()

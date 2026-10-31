@@ -26,7 +26,8 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/recovery/root/linkerconfig/.keep:recovery/root/linkerconfig/.keep \
     $(DEVICE_PATH)/recovery/root/system/etc/task_profiles.json:recovery/root/system/etc/task_profiles.json \
     $(DEVICE_PATH)/recovery/root/mtk-plpath-utils.rc:recovery/root/mtk-plpath-utils.rc \
-    $(DEVICE_PATH)/recovery/root/snapuserd.rc:recovery/root/snapuserd.rc
+    $(DEVICE_PATH)/recovery/root/snapuserd.rc:recovery/root/snapuserd.rc \
+    $(DEVICE_PATH)/recovery/root/init.tee.rc:recovery/root/init.tee.rc
 
 # Platform Vendor Ramdisk (Ramdisk 0 in vendor_boot.img)
 # Required so Normal Android OS boot (Android 12-17) has /first_stage_ramdisk/fstab.mt6789

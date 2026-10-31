@@ -1,5 +1,4 @@
 import /init.tee.rc
-import /init.device.rc
 import /mtk-plpath-utils.rc
 import /snapuserd.rc
 
