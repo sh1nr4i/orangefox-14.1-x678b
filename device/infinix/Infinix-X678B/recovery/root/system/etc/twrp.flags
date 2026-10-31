@@ -1,0 +1,51 @@
+# Android fstab file for OrangeFox / TWRP UI
+# Supports Android 12 - 17 (Stock XOS, Infinity-X 17.0, LineageOS, etc.)
+
+# mount point		fs			device						device2			 device3			flags
+# User writeable partitions
+/boot				emmc		/dev/block/by-name/boot											flags=display="Boot";slotselect;backup=1;flashimg=1
+/vendor_boot		emmc		/dev/block/by-name/vendor_boot									flags=display="Vendor Boot";slotselect;backup=1;flashimg=1
+/vbmeta				emmc		/dev/block/by-name/vbmeta										flags=display="VBMeta";slotselect;backup=1;flashimg=1
+/vbmeta_system		emmc		/dev/block/by-name/vbmeta_system								flags=display="VBMeta System";slotselect;backup=1;flashimg=1
+/vbmeta_vendor		emmc		/dev/block/by-name/vbmeta_vendor								flags=display="VBMeta Vendor";slotselect;backup=1;flashimg=1
+
+# Firmware
+/dtbo				emmc		/dev/block/by-name/dtbo											flags=display="DTBO";slotselect;backup=1;flashimg=1
+/metadata			ext4		/dev/block/by-name/metadata										flags=display="Metadata";backup=1;wipeingui
+/misc				emmc		/dev/block/by-name/misc											flags=display="Misc";backup=1
+/tranfs				ext4		/dev/block/by-name/tranfs										flags=display="Tranfs";backup=1;wipeingui
+
+# Sensitive Data
+/nvcfg				ext4		/dev/block/by-name/nvcfg										flags=display="NVCFG";backup=1
+/persist			ext4		/dev/block/by-name/persist										flags=display="Persist";backup=1
+/persist_image		emmc		/dev/block/by-name/persist										flags=display="Persist Image";backup=1;flashimg=1
+/persistent			emmc		/dev/block/by-name/frp											flags=display="FRP";backup=1
+
+# IMEI and modem related
+/nvdata				ext4		/dev/block/by-name/nvdata										flags=display="NVDATA";backup=1
+/protect_f			ext4		/dev/block/by-name/protect1										flags=display="Protect_F";backup=1
+/protect_s			ext4		/dev/block/by-name/protect2										flags=display="Protect_S";backup=1
+/nvram				emmc		/dev/block/by-name/nvram										flags=display="NVRAM";backup=1
+/proinfo			emmc		/dev/block/by-name/proinfo										flags=display="Proinfo";backup=1
+
+# Standard MediaTek's partitions
+/expdb				emmc		/dev/block/by-name/expdb										flags=display="Expdb"
+/logo				emmc		/dev/block/by-name/logo											flags=display="Logo";slotselect;backup=1;flashimg=1
+/otp				emmc		/dev/block/by-name/otp											flags=display="OTP"
+/seccfg				emmc		/dev/block/by-name/seccfg										flags=display="Seccfg";backup=1
+/spmfw				emmc		/dev/block/by-name/spmfw										flags=display="Spmfw";slotselect
+/tee1				emmc		/dev/block/by-name/tee1											flags=display="TEE1";backup=1
+/tee2				emmc		/dev/block/by-name/tee2											flags=display="TEE2";backup=1
+/tkv				emmc		/dev/block/by-name/tkv											flags=display="TKV";slotselect;backup=1
+
+# Removable Storage
+/external_sd		auto		/dev/block/mmcblk1p1		/dev/block/mmcblk0p1				flags=display="Micro SD Card";storage;wipeingui;removable;backup=0
+/usb_otg			auto		/dev/block/sdd1				/dev/block/sdd						flags=display="USB-OTG";storage;wipeingui;removable;backup=0
+
+# Flashable logical partitions
+/system_image		emmc		/dev/block/bootdevice/by-name/system							flags=display="System Image";backup=1;flashimg=1
+/vendor_image		emmc		/dev/block/bootdevice/by-name/vendor							flags=display="Vendor Image";backup=1;flashimg=1
+/system_ext_image	emmc		/dev/block/bootdevice/by-name/system_ext						flags=display="System_EXT Image";backup=1;flashimg=1
+/product_image		emmc		/dev/block/bootdevice/by-name/product							flags=display="Product Image";backup=1;flashimg=1
+/vendor_dlkm_image	emmc		/dev/block/bootdevice/by-name/vendor_dlkm						flags=display="VendorDLKM Image";backup=1;flashimg=1
+/odm_dlkm_image		emmc		/dev/block/bootdevice/by-name/odm_dlkm							flags=display="OdmDLKM Image";backup=1;flashimg=1

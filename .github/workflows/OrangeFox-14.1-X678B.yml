@@ -1,0 +1,174 @@
+name: OrangeFox 14.1 - Infinix X678B (Universal Android 12-17 / Infinity-X 17.0)
+
+on:
+  workflow_dispatch:
+    inputs:
+      FOX_BRANCH:
+        description: 'OrangeFox Manifest Branch'
+        required: true
+        default: '14.1'
+        type: choice
+        options:
+          - '14.1'
+          - '12.1'
+      COMMON_BRANCH:
+        description: 'Transsion MT6789 Common Tree Branch'
+        required: true
+        default: 'fox_12.1-tranos15'
+        type: choice
+        options:
+          - 'fox_12.1-tranos15'
+          - 'fox_12.1'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build OrangeFox ${{ inputs.FOX_BRANCH || '14.1' }} (Infinix-X678B)
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      FOX_BRANCH: ${{ inputs.FOX_BRANCH || '14.1' }}
+      COMMON_BRANCH: ${{ inputs.COMMON_BRANCH || 'fox_12.1-tranos15' }}
+      COMMON_REPO: 'https://github.com/transsion-mt6789-recovery/twrp-device_transsion_mt6789-common.git'
+      MODULES_REPO: 'https://github.com/akifakif32/android_device_infinix_X678B-kernel.git'
+      MODULES_BRANCH: 'sixteen-mck'
+      FOX_ROOT: '${{ github.workspace }}/OrangeFox/fox_${{ inputs.FOX_BRANCH || ''14.1'' }}'
+      DEVICE_PATH: 'device/infinix/Infinix-X678B'
+      COMMON_PATH: 'device/transsion/mt6789-common'
+      PRODUCT_NAME: 'twrp_X678B'
+      DEVICE_NAME: 'Infinix-X678B'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: repo_self
+
+      - name: Free runner disk space
+        uses: rokibhasansagar/slimhub_actions@main
+
+      - name: Configure 24GB Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 24
+
+      - name: Install Android build dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt update
+          sudo apt -y upgrade
+          git clone --depth=1 https://gitlab.com/OrangeFox/misc/scripts "$RUNNER_TEMP/orangefox-scripts"
+          cd "$RUNNER_TEMP/orangefox-scripts"
+          sudo bash setup/android_build_env.sh
+
+      - name: Sync OrangeFox source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/OrangeFox"
+          cd "$GITHUB_WORKSPACE/OrangeFox"
+          git config --global user.name 'OrangeFox Builder'
+          git config --global user.email 'orangefox-builder@users.noreply.github.com'
+          git clone --depth=1 https://gitlab.com/OrangeFox/sync.git
+          cd sync
+          ./orangefox_sync.sh --branch "$FOX_BRANCH" --path "$FOX_ROOT"
+
+      - name: Setup Device Tree, Common Tree & Latest Modules (17.0 / sixteen-mck)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$FOX_ROOT"
+
+          # 1. Clone Transsion MT6789 Common Recovery Tree
+          rm -rf "$COMMON_PATH"
+          git clone --depth=1 -b "$COMMON_BRANCH" "$COMMON_REPO" "$COMMON_PATH"
+
+          # 2. Place our unified Infinix-X678B Device Tree
+          rm -rf "$DEVICE_PATH"
+          mkdir -p "$(dirname "$DEVICE_PATH")"
+          if [ -d "$GITHUB_WORKSPACE/repo_self/device/infinix/Infinix-X678B" ]; then
+            cp -a "$GITHUB_WORKSPACE/repo_self/device/infinix/Infinix-X678B" "$DEVICE_PATH"
+          else
+            cp -a "$GITHUB_WORKSPACE/repo_self" "$DEVICE_PATH"
+            rm -rf "$DEVICE_PATH/.git" "$DEVICE_PATH/.github"
+          fi
+
+          # 3. Sync latest kernel ramdisk modules & DTB from akifakif32 (17.0 / sixteen-mck)
+          git clone --depth=1 -b "$MODULES_BRANCH" "$MODULES_REPO" "$RUNNER_TEMP/akif_kernel"
+          mkdir -p "$DEVICE_PATH/prebuilt" "$DEVICE_PATH/recovery/root/lib/modules"
+          cp -f "$RUNNER_TEMP/akif_kernel/dtb/mt6789.dtb" "$DEVICE_PATH/prebuilt/dtb.img"
+          cp -f "$RUNNER_TEMP/akif_kernel/ramdisk/"* "$DEVICE_PATH/recovery/root/lib/modules/"
+
+          # 4. Override common fstab & init.recovery.mt6789.rc with our universal Android 12-17 versions
+          cp -f "$DEVICE_PATH/recovery/root/first_stage_ramdisk/fstab.mt6789" "$COMMON_PATH/recovery/root/first_stage_ramdisk/fstab.mt6789"
+          cp -f "$DEVICE_PATH/recovery/root/system/etc/recovery.fstab" "$COMMON_PATH/recovery/root/system/etc/recovery.fstab"
+          cp -f "$DEVICE_PATH/recovery/root/system/etc/twrp.flags" "$COMMON_PATH/recovery/root/system/etc/twrp.flags"
+          cp -f "$DEVICE_PATH/recovery/root/init.recovery.mt6789.rc" "$COMMON_PATH/recovery/root/init.recovery.mt6789.rc"
+          cp -f "$DEVICE_PATH/recovery/root/system/etc/task_profiles.json" "$COMMON_PATH/recovery/root/system/etc/task_profiles.json"
+
+          # Disable external clone in vendorsetup.sh since we already cloned common tree above
+          rm -f "$DEVICE_PATH/vendorsetup.sh"
+
+      - name: Preflight Verification
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd "$FOX_ROOT"
+          test -f "$DEVICE_PATH/AndroidProducts.mk"
+          test -f "$DEVICE_PATH/BoardConfig.mk"
+          test -f "$DEVICE_PATH/device.mk"
+          test -f "$DEVICE_PATH/twrp_X678B.mk"
+          test -f "$DEVICE_PATH/init/init_Infinix-X678B.cpp"
+          test -s "$DEVICE_PATH/prebuilt/dtb.img"
+          test -s "$DEVICE_PATH/recovery/root/lib/modules/modules.load.recovery"
+          test -s "$DEVICE_PATH/recovery/root/lib/modules/ft3681_common.ko"
+          test -s "$DEVICE_PATH/recovery/root/vendor/firmware/focaltech_ts_fw.bin"
+          test -s "$COMMON_PATH/BoardConfigCommon.mk"
+          test -s "$COMMON_PATH/recovery/root/first_stage_ramdisk/fstab.mt6789"
+          test -s "$COMMON_PATH/recovery/root/system/etc/task_profiles.json"
+
+      - name: Build OrangeFox vendor_boot image
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$FOX_ROOT"
+          mkdir -p "$GITHUB_WORKSPACE/output"
+          set +u
+          export ALLOW_MISSING_DEPENDENCIES=true
+          export FOX_BUILD_DEVICE="$DEVICE_NAME"
+          export LC_ALL=C
+          source build/envsetup.sh
+
+          if [ "$FOX_BRANCH" = "14.1" ]; then
+            lunch "${PRODUCT_NAME}-ap2a-eng" || lunch "${PRODUCT_NAME}-eng"
+          else
+            lunch "${PRODUCT_NAME}-eng"
+          fi
+
+          mka adbd vendorbootimage 2>&1 | tee "$GITHUB_WORKSPACE/output/build-vendorboot.log"
+
+      - name: Collect Output Images
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          mkdir -p "$GITHUB_WORKSPACE/output"
+          cd "$FOX_ROOT/out/target/product/$DEVICE_NAME" 2>/dev/null || exit 0
+          for f in vendor_boot.img OrangeFox*.img OrangeFox*.zip ramdisk-recovery.cpio; do
+            if [ -f "$f" ]; then
+              cp -f "$f" "$GITHUB_WORKSPACE/output/"
+            fi
+          done
+          ls -lh "$GITHUB_WORKSPACE/output/"
+
+      - name: Upload Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OrangeFox-${{ env.FOX_BRANCH }}-Infinix-X678B-vendor_boot
+          path: output/*
+          if-no-files-found: warn
+          retention-days: 14

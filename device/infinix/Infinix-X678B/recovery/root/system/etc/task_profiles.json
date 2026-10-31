@@ -1,0 +1,28 @@
+{
+  "Profiles": [
+    {
+      "Name": "ProcessCapacityNormal",
+      "Actions": [
+        {
+          "Name": "JoinCgroup",
+          "Params": {
+            "Controller": "cpu",
+            "Path": ""
+          }
+        }
+      ]
+    },
+    {
+      "Name": "ServiceCapacityLow",
+      "Actions": [
+        {
+          "Name": "JoinCgroup",
+          "Params": {
+            "Controller": "cpu",
+            "Path": ""
+          }
+        }
+      ]
+    }
+  ]
+}
