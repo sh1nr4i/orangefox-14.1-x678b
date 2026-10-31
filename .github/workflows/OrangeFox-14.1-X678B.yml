@@ -90,17 +90,26 @@ jobs:
 
           # Fix 1a: In common.mk, make all inherit-product calls optional, drop ROM-only/obsolete
           # product makefiles (gsi_keys.mk, compression.mk, emulated_storage.mk, launch_with_vendor_ramdisk.mk),
-          # remove hardcoded PRODUCT_TARGET_VNDK_VERSION := 31 (absent in fox_14.1), and remove broken
-          # TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES (where TARGET_OUT_SHARED_LIBRARIES is empty in common.mk)
+          # remove hardcoded PRODUCT_TARGET_VNDK_VERSION := 31 (absent in fox_14.1), remove broken
+          # TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES, and ensure bootctl is in PRODUCT_PACKAGES
           sed -i 's/inherit-product,/inherit-product-if-exists,/g' "$COMMON_PATH/common.mk"
           sed -i -E '/gsi_keys\.mk/d; /emulated_storage\.mk/d; /virtual_ab_ota\//d' "$COMMON_PATH/common.mk"
           sed -i '/PRODUCT_TARGET_VNDK_VERSION/d' "$COMMON_PATH/common.mk"
           sed -i '/TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES/,+1d' "$COMMON_PATH/common.mk"
+          sed -i 's/PRODUCT_PACKAGES_DEBUG/PRODUCT_PACKAGES/g' "$COMMON_PATH/common.mk"
 
-          # Fix 1b: In BoardConfigCommon.mk, fix BOARD_STSTEMIMAGE typo and remove RECOVERY_BINARY_SOURCE_FILES
-          # for debuggerd/strace (which are not in PRODUCT_PACKAGES and cause Ninja missing rule errors on A14)
+          # Fix 1b: In BoardConfigCommon.mk, fix BOARD_STSTEMIMAGE typo, remove RECOVERY_BINARY_SOURCE_FILES
+          # for debuggerd/strace, remove TW_INCLUDE_LPTOOLS/TW_INCLUDE_FB2PNG (absent in fox_14.1 minimal manifest),
+          # and define OF_DEFAULT_KEYMASTER_VERSION := 4.1 (required by bootable/recovery/orangefox.mk:647)
           sed -i 's/BOARD_STSTEMIMAGE_FILE_SYSTEM_TYPE/BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE/g' "$COMMON_PATH/BoardConfigCommon.mk"
           sed -i '/RECOVERY_BINARY_SOURCE_FILES/d; /debuggerd/d; /strace/d' "$COMMON_PATH/BoardConfigCommon.mk"
+          sed -i '/TW_INCLUDE_LPTOOLS/d; /TW_INCLUDE_FB2PNG/d' "$COMMON_PATH/BoardConfigCommon.mk"
+          cat >> "$COMMON_PATH/BoardConfigCommon.mk" <<'EOF'
+
+          # OrangeFox 14.1 Keymaster & Lptools compatibility
+          OF_DEFAULT_KEYMASTER_VERSION := 4.1
+          TW_EXCLUDE_LPTOOLS := true
+          EOF
 
           # Fix 1c: In bootctrl, remove undefined device_kernel_headers dependency, add -Wno-error,
           # and add <stdio.h>/<unistd.h> required by Android 14 libc++
@@ -232,6 +241,10 @@ jobs:
           test -s "$COMMON_PATH/recovery/root/system/etc/task_profiles.json"
           ! grep -Eq 'gsi_keys\.mk|PRODUCT_TARGET_VNDK_VERSION|TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES' "$COMMON_PATH/common.mk"
           ! grep -Eq 'device_kernel_headers' "$COMMON_PATH/bootctrl/Android.bp"
+          grep -q 'OF_DEFAULT_KEYMASTER_VERSION' "$DEVICE_PATH/BoardConfig.mk"
+          grep -q 'OF_DEFAULT_KEYMASTER_VERSION' "$COMMON_PATH/BoardConfigCommon.mk"
+          ! grep -q 'TW_INCLUDE_LPTOOLS := true' "$DEVICE_PATH/BoardConfig.mk"
+          ! grep -q 'TW_INCLUDE_LPTOOLS := true' "$COMMON_PATH/BoardConfigCommon.mk"
           cat "$DEVICE_PATH/AndroidProducts.mk"
           cat "$COMMON_PATH/common.mk"
 
@@ -243,7 +256,12 @@ jobs:
           mkdir -p "$GITHUB_WORKSPACE/output"
           set +u
           export ALLOW_MISSING_DEPENDENCIES=true
-          export FOX_BUILD_DEVICE="$DEVICE_NAME"
+          export FOX_BUILD_DEVICE="X678B"
+          export FOX_TARGET_DEVICES="Infinix-X678B,X678B,satire"
+          export OF_DEFAULT_KEYMASTER_VERSION="4.1"
+          export FOX_AB_DEVICE=1
+          export FOX_VIRTUAL_AB_DEVICE=1
+          export FOX_VANILLA_BUILD=1
           export LC_ALL=C
           source build/envsetup.sh
 
@@ -251,6 +269,14 @@ jobs:
             lunch "${PRODUCT_NAME}-ap2a-eng"
           else
             lunch "${PRODUCT_NAME}-eng"
+          fi
+
+          # Ensure /tmp/X678B/fox_env.sh and /tmp/Infinix-X678B/fox_env.sh both exist for OrangeFox_A14.sh
+          mkdir -p /tmp/X678B /tmp/Infinix-X678B
+          if [ -f /tmp/X678B/fox_env.sh ] && [ ! -f /tmp/Infinix-X678B/fox_env.sh ]; then
+            cp -f /tmp/X678B/fox_env.sh /tmp/Infinix-X678B/fox_env.sh
+          elif [ -f /tmp/Infinix-X678B/fox_env.sh ] && [ ! -f /tmp/X678B/fox_env.sh ]; then
+            cp -f /tmp/Infinix-X678B/fox_env.sh /tmp/X678B/fox_env.sh
           fi
 
           mka adbd vendorbootimage 2>&1 | tee "$GITHUB_WORKSPACE/output/build-vendorboot.log"

@@ -10,9 +10,10 @@ DEVICE_PATH := device/infinix/Infinix-X678B
 # Inherit from mt6789-common
 $(call inherit-product, device/transsion/mt6789-common/common.mk)
 
-# A/B Boot Slot Detection Helper (ensures ro.boot.slot_suffix is set on Android 12-17)
+# A/B Boot Slot Detection Helper & Boot Control CLI (required by OrangeFox 14.1 AB devices)
 PRODUCT_PACKAGES += \
-    unified_slot_detect
+    unified_slot_detect \
+    bootctl
 
 # Fast Charging & USB properties
 PRODUCT_PROPERTY_OVERRIDES += \
