@@ -147,7 +147,8 @@ jobs:
           EOF
           sed -i '1i #include <stdio.h>\n#include <unistd.h>' "$COMMON_PATH/bootctrl/boot_region_control.cpp"
 
-          # Fix 1d: In mtk_plpath_utils, add libdm (split out of libfs_mgr in A14) and <errno.h>/<string.h>
+          # Fix 1d: In mtk_plpath_utils, link libdm + libext2_uuid statically (libdm is static-only in A14 recovery)
+          # and add <errno.h>/<string.h>
           cat > "$COMMON_PATH/mtk_plpath_utils/Android.bp" <<'EOF'
           cc_binary {
               name: "mtk_plpath_utils",
@@ -157,13 +158,14 @@ jobs:
               ],
               recovery_available: true,
               static_libs: [
-                  "libfs_mgr",
                   "libdm",
+                  "libext2_uuid",
               ],
               shared_libs: [
                   "libbase",
+                  "libcutils",
                   "liblog",
-                  "libdm",
+                  "libutils",
               ],
           }
           EOF
