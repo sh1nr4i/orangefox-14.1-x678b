@@ -307,7 +307,7 @@ jobs:
           fi
 
           # Pre-build and verify all custom C++ device/common modules first (fail-fast in ~2 min if any dep is missing)
-          mka unified_slot_detect libinit_Infinix-X678B mtk_plpath_utils mtk_plpath_utils.recovery android.hardware.boot@1.2-mtkimpl android.hardware.boot@1.2-mtkimpl.recovery 2>&1 | tee "$GITHUB_WORKSPACE/output/build-custom-modules.log"
+          mka unified_slot_detect libinit_Infinix-X678B mtk_plpath_utils mtk_plpath_utils.recovery android.hardware.boot@1.2-mtkimpl android.hardware.boot@1.2-mtkimpl.recovery libcppbor_external 2>&1 | tee "$GITHUB_WORKSPACE/output/build-custom-modules.log"
 
           mka adbd vendorbootimage 2>&1 | tee "$GITHUB_WORKSPACE/output/build-vendorboot.log"
 

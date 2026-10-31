@@ -13,7 +13,8 @@ $(call inherit-product, device/transsion/mt6789-common/common.mk)
 # A/B Boot Slot Detection Helper & Boot Control CLI (required by OrangeFox 14.1 AB devices)
 PRODUCT_PACKAGES += \
     unified_slot_detect \
-    bootctl
+    bootctl \
+    libcppbor_external
 
 # Fast Charging & USB properties
 PRODUCT_PROPERTY_OVERRIDES += \

@@ -18,9 +18,22 @@ on fs
     start unified_slot_detect
     install_keyring
 
+    # Create persist mountpoint and mcRegistry directories for Trustonic TEE
+    mkdir /mnt/vendor/persist 0771 system system
+    mkdir /mnt/vendor/persist/mcRegistry 0771 system system
+    mkdir /data/vendor/mcRegistry 0775 system system
+
+    # Start Trustonic TEE & Security HAL services early for storage decryption
+    start mobicore
+    start vendor.gatekeeper-1-0
+    start vendor.keymint-trustonic
+
 on boot
     setprop sys.usb.config adb
     start mtk.plpath.utils.link
+    start mobicore
+    start vendor.gatekeeper-1-0
+    start vendor.keymint-trustonic
 
     # Fuel gauge & Transsion 68W All-Round FastCharge nodes
     symlink /sys/devices/platform/soc/10026000.pwrap/10026000.pwrap:mt6366/mt6358-gauge /dev/gauge
@@ -60,10 +73,17 @@ service vendor.keymint-trustonic /vendor/bin/hw/android.hardware.security.keymin
     class early_hal
     interface android.hardware.keymaster@4.0::IKeymasterDevice default
     interface android.hardware.keymaster@4.1::IKeymasterDevice default
-    user nobody
+    user root
+    group root
+    disabled
     seclabel u:r:recovery:s0
 
-on property:ro.crypto.state=encrypted && property:ro.boot.dynamic_partitions=true
+on property:crypto.ready=1
+    start mobicore
+    start vendor.gatekeeper-1-0
+    start vendor.keymint-trustonic
+
+on property:ro.crypto.state=encrypted
     start mobicore
     start vendor.gatekeeper-1-0
     start vendor.keymint-trustonic

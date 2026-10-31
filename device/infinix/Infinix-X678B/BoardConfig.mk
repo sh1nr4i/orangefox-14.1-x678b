@@ -24,7 +24,7 @@ TARGET_OTA_ASSERT_DEVICE := Infinix-X678B,X678B,satire
 
 # Init (Slot suffix detection from bootconfig/cmdline/dt/misc + product props)
 TARGET_INIT_VENDOR_LIB := libinit_Infinix-X678B
-TARGET_RECOVERY_DEVICE_MODULES += libinit_Infinix-X678B
+TARGET_RECOVERY_DEVICE_MODULES += libinit_Infinix-X678B libcppbor_external
 
 # Display
 TARGET_SCREEN_DENSITY := 480
