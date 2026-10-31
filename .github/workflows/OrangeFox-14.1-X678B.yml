@@ -236,7 +236,11 @@ jobs:
           test -f "$DEVICE_PATH/twrp_X678B.mk"
           test -f "$DEVICE_PATH/init/init_Infinix-X678B.cpp"
           test -s "$DEVICE_PATH/prebuilt/dtb.img"
+          test -s "$DEVICE_PATH/recovery/root/lib/modules/modules.load"
           test -s "$DEVICE_PATH/recovery/root/lib/modules/modules.load.recovery"
+          ! grep -Eq 'clk-disable-unused\.ko|mtk-pm-domain-disable-unused\.ko' "$DEVICE_PATH/recovery/root/lib/modules/modules.load"
+          grep -q 'clk-disable-unused.ko' "$DEVICE_PATH/recovery/root/lib/modules/modules.load.recovery"
+          grep -q 'TARGET_COPY_OUT_VENDOR_RAMDISK' "$DEVICE_PATH/device.mk"
           test -s "$DEVICE_PATH/recovery/root/lib/modules/ft3681_common.ko"
           test -s "$DEVICE_PATH/recovery/root/lib/modules/hl7138.ko"
           test -s "$DEVICE_PATH/recovery/root/lib/modules/mtk_chg_det.ko"
@@ -288,6 +292,15 @@ jobs:
           mka unified_slot_detect libinit_Infinix-X678B mtk_plpath_utils mtk_plpath_utils.recovery android.hardware.boot@1.2-mtkimpl android.hardware.boot@1.2-mtkimpl.recovery 2>&1 | tee "$GITHUB_WORKSPACE/output/build-custom-modules.log"
 
           mka adbd vendorbootimage 2>&1 | tee "$GITHUB_WORKSPACE/output/build-vendorboot.log"
+
+          # Verify both Platform Vendor Ramdisk (Ramdisk 0 for Normal OS boot) and Recovery Ramdisk (Ramdisk 1 for Recovery boot)
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_ramdisk/first_stage_ramdisk/fstab.mt6789"
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_ramdisk/lib/modules/modules.load"
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_ramdisk/lib/modules/modules.load.recovery"
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/vendor_ramdisk/lib/modules/ufs-mediatek-mod.ko"
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/first_stage_ramdisk/fstab.mt6789"
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/lib/modules/modules.load.recovery"
+          test -s "$FOX_ROOT/out/target/product/$DEVICE_NAME/recovery/root/lib/modules/ft3681_common.ko"
 
       - name: Collect Output Images
         if: always()

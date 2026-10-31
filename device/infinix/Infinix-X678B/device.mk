@@ -26,3 +26,10 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/recovery/root/system/etc/task_profiles.json:recovery/root/system/etc/task_profiles.json \
     $(DEVICE_PATH)/recovery/root/mtk-plpath-utils.rc:recovery/root/mtk-plpath-utils.rc \
     $(DEVICE_PATH)/recovery/root/snapuserd.rc:recovery/root/snapuserd.rc
+
+# Platform Vendor Ramdisk (Ramdisk 0 in vendor_boot.img)
+# Required so Normal Android OS boot (Android 12-17) has /first_stage_ramdisk/fstab.mt6789
+# and /lib/modules/* even when vendor_boot.img is flashed directly via fastboot!
+PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/recovery/root/first_stage_ramdisk/fstab.mt6789:$(TARGET_COPY_OUT_VENDOR_RAMDISK)/first_stage_ramdisk/fstab.mt6789 \
+    $(call find-copy-subdir-files,*,$(DEVICE_PATH)/recovery/root/lib/modules,$(TARGET_COPY_OUT_VENDOR_RAMDISK)/lib/modules)
