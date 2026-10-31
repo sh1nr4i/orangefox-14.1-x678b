@@ -269,6 +269,7 @@ jobs:
           grep -q 'OF_DEFAULT_KEYMASTER_VERSION' "$COMMON_PATH/BoardConfigCommon.mk"
           ! grep -q 'TW_INCLUDE_LPTOOLS := true' "$DEVICE_PATH/BoardConfig.mk"
           ! grep -q 'TW_INCLUDE_LPTOOLS := true' "$COMMON_PATH/BoardConfigCommon.mk"
+          ! grep -Eq 'OF_QUICK_BACKUP_LIST|OF_TARGET_DEVICES|OF_SUPPORT_ALL_BLOCK_OTA_UPDATES' "$DEVICE_PATH/BoardConfig.mk"
           cat "$DEVICE_PATH/AndroidProducts.mk"
           cat "$COMMON_PATH/common.mk"
 
@@ -331,12 +332,7 @@ jobs:
         run: |
           set +e
           mkdir -p "$GITHUB_WORKSPACE/output"
-          cd "$FOX_ROOT/out/target/product/$DEVICE_NAME" 2>/dev/null || exit 0
-          for f in vendor_boot.img OrangeFox*.img OrangeFox*.zip ramdisk-recovery.cpio; do
-            if [ -f "$f" ]; then
-              cp -f "$f" "$GITHUB_WORKSPACE/output/"
-            fi
-          done
+          find "$FOX_ROOT/out/target/product" -type f \( -name "vendor_boot.img" -o -name "OrangeFox*.img" -o -name "OrangeFox*.zip" -o -name "ramdisk-recovery.cpio" -o -name "recovery.img" \) -exec cp -fv {} "$GITHUB_WORKSPACE/output/" \; 2>/dev/null || true
           ls -lh "$GITHUB_WORKSPACE/output/"
 
       - name: Upload Artifact
