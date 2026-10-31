@@ -129,6 +129,8 @@ jobs:
               recovery_available: true,
               srcs: ["BootControl.cpp", "boot_region_control.cpp"],
               shared_libs: [
+                  "libbase",
+                  "libcutils",
                   "liblog",
                   "libhidlbase",
                   "libhardware",
