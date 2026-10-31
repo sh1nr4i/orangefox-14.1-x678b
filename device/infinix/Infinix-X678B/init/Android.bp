@@ -5,10 +5,25 @@ cc_library_static {
     ],
     cflags: [
         "-Wall",
+        "-Wno-error",
     ],
     static_libs: [
         "libbase",
     ],
     srcs: ["init_Infinix-X678B.cpp"],
     recovery_available: true,
+}
+
+cc_binary {
+    name: "unified_slot_detect",
+    cflags: [
+        "-Wall",
+        "-Wno-error",
+        "-DBUILD_SLOT_DETECT_BINARY",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+    srcs: ["init_Infinix-X678B.cpp"],
+    recovery: true,
 }

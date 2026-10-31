@@ -10,6 +10,10 @@ DEVICE_PATH := device/infinix/Infinix-X678B
 # Inherit from mt6789-common
 $(call inherit-product, device/transsion/mt6789-common/common.mk)
 
+# A/B Boot Slot Detection Helper (ensures ro.boot.slot_suffix is set on Android 12-17)
+PRODUCT_PACKAGES += \
+    unified_slot_detect
+
 # Fast Charging & USB properties
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.vendor.mtk_fast_charging_support=1

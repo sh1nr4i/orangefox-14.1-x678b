@@ -10,11 +10,13 @@ on init
     export LD_LIBRARY_PATH /system/lib64:/vendor/lib64:/vendor/lib64/hw
     setprop crypto.ready 1
     setprop ro.vendor.mtk_fast_charging_support 1
+    start unified_slot_detect
     start boot-hal-1-2
 
 on fs
     wait /dev/block/platform/soc/11270000.ufshci
     symlink /dev/block/platform/soc/11270000.ufshci /dev/block/bootdevice
+    start unified_slot_detect
     install_keyring
 
 on boot
@@ -41,6 +43,13 @@ on boot
 
 on post-fs-data
     start health-hal-2-1
+
+service unified_slot_detect /system/bin/unified_slot_detect
+    user root
+    group root
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
 
 service vendor.gatekeeper-1-0 /vendor/bin/hw/android.hardware.gatekeeper@1.0-service
     interface android.hardware.gatekeeper@1.0::IGatekeeper default

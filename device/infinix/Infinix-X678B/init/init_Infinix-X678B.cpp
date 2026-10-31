@@ -145,6 +145,8 @@ static string read_slot_from_misc()
     const char *paths[] = {
         "/dev/block/by-name/misc",
         "/dev/block/bootdevice/by-name/misc",
+        "/dev/block/platform/bootdevice/by-name/misc",
+        "/dev/block/platform/soc/11270000.ufshci/by-name/misc",
     };
 
     for (const char *path : paths) {
@@ -221,3 +223,29 @@ void vendor_load_properties()
     property_override("ro.bootimage.build.date.utc", "1609430400");
     property_override("ro.build.date.utc", "1609430400");
 }
+
+#ifdef BUILD_SLOT_DETECT_BINARY
+#include <sys/wait.h>
+
+static void run_resetprop(const char *key, const string &val)
+{
+    pid_t pid = fork();
+    if (pid == 0) {
+        execl("/system/bin/resetprop", "resetprop", key, val.c_str(), nullptr);
+        _exit(127);
+    } else if (pid > 0) {
+        int status = 0;
+        waitpid(pid, &status, 0);
+    }
+}
+
+int main()
+{
+    const string slot_suffix = detect_slot_suffix();
+    if (!slot_suffix.empty()) {
+        run_resetprop("ro.boot.slot_suffix", slot_suffix);
+        run_resetprop("ro.boot.slot", slot_suffix.substr(1));
+    }
+    return 0;
+}
+#endif
