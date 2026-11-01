@@ -49,6 +49,7 @@ on boot
 
     # Start Trustonic TEE & Security HAL services
     start mobicore
+    start vendor.keymint-trustonic
     start vendor.gatekeeper-1-0
 
 on post-fs-data
@@ -61,15 +62,9 @@ service unified_slot_detect /system/bin/unified_slot_detect
     oneshot
     seclabel u:r:recovery:s0
 
-service vendor.gatekeeper-1-0 /vendor/bin/hw/android.hardware.gatekeeper@1.0-service
-    interface android.hardware.gatekeeper@1.0::IGatekeeper default
-    user root
-    group root
-    disabled
-    seclabel u:r:recovery:s0
-
 on property:hwservicemanager.ready=true
     start mobicore
+    start vendor.keymint-trustonic
     start vendor.gatekeeper-1-0
 
 on property:servicemanager.ready=true

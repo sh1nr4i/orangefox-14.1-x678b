@@ -52,9 +52,10 @@ TW_EXCLUDE_LPTOOLS := true
 TW_USE_TOOLBOX := true
 TW_INPUT_BLACKLIST := "hbtp_vm"
 
-# Crypto: Disabled to prevent recovery hang at splash screen (Trustonic KeyMint binary lacks Android 14 AIDL libraries)
-TW_INCLUDE_CRYPTO := false
-TW_INCLUDE_CRYPTO_FBE := false
+# Crypto & Hardware Decryption (Android 14 KeyMint + Trustonic TEE)
+TW_INCLUDE_CRYPTO := true
+TW_INCLUDE_CRYPTO_FBE := true
+TW_INCLUDE_FBE_METADATA_DECRYPT := true
 TW_FORCE_KEYMASTER_VER := false
 OF_DEFAULT_KEYMASTER_VERSION := 4.1
 FOX_AB_DEVICE := 1
